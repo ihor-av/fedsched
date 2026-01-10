@@ -1,0 +1,10 @@
+[package]
+name = "fedsched"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+async-graphql = "7.0.19"
+async-graphql-axum = "7.1.0"
+axum = "0.8.8"
+tower-http = "0.6.8"

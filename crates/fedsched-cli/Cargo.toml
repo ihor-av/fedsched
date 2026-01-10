@@ -1,0 +1,10 @@
+[package]
+name = "fedsched-cli"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+axum = "0.8.8"
+fedsched = { path = "../fedsched" }
+tokio = { version = "1.49.0", features = ["rt-multi-thread"] }
+tower-http = { version = "0.6.8", features = ["cors"] }
