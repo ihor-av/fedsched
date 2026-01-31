@@ -1,45 +1,45 @@
-use async_graphql::*;
+mod error;
+mod graphql;
+mod surql_templates;
+use crate::{
+    config::{FieldConfig, mandatory_event_table_fields, smart_config_merge},
+    error::FedschedResult,
+    graphql::{SchedulerContext, build_schema},
+};
+use async_graphql::http::{GraphQLPlaygroundConfig, playground_source};
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{
-    Router, extract::Extension, http::header::CONTENT_TYPE, response::IntoResponse, routing::post,
+    Extension, Router,
+    response::{Html, IntoResponse},
+    routing::get,
 };
-use tower_http::cors::{Any, CorsLayer};
+pub mod config;
 
-#[derive(SimpleObject)]
-struct Event {
-    id: ID,
-    name: String,
+pub async fn setup_scheduler(cfgs: Vec<FieldConfig>) -> FedschedResult<Router> {
+    let mandatory_cfgs = mandatory_event_table_fields();
+    let cfgs = smart_config_merge(cfgs, mandatory_cfgs);
+    let ctx = SchedulerContext::build_ctx_from_cfgs(&cfgs).await?;
+    let schema = build_schema(ctx, cfgs)?;
+    Ok(Router::new()
+        .route("/", get(playground_handler).post(graphql_handler))
+        .layer(Extension(schema)))
 }
 
-#[derive(Default)]
-pub struct QueryRoot;
-
-#[Object]
-impl QueryRoot {
-    async fn event(&self, id: ID) -> Event {
-        let name = format!("Demo event with id: {id:?}");
-        Event { id, name }
-    }
-}
-
-pub async fn setup_scheduler() -> Router {
-    let schema = Schema::build(QueryRoot::default(), EmptyMutation, EmptySubscription).finish();
-    let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers([CONTENT_TYPE]);
-
-    Router::new()
-        .route("/graphql", post(graphql_handler))
-        .layer(Extension(schema))
-        .layer(cors)
+async fn playground_handler() -> impl IntoResponse {
+    Html(playground_source(GraphQLPlaygroundConfig::new("/")))
 }
 
 async fn graphql_handler(
-    Extension(schema): Extension<Schema<QueryRoot, EmptyMutation, EmptySubscription>>,
+    schema: Extension<async_graphql::dynamic::Schema>,
     req: GraphQLRequest,
-) -> impl IntoResponse {
-    let inner_req = req.into_inner();
-    let resp = schema.execute(inner_req).await;
-    GraphQLResponse::from(resp)
+) -> GraphQLResponse {
+    schema.execute(req.into_inner()).await.into()
+}
+
+pub mod prelude {
+    pub use crate::{
+        config::{FieldConfig, FieldConstraint},
+        error::{FedschedError, FedschedResult},
+        setup_scheduler,
+    };
 }
