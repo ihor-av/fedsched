@@ -1,9 +1,12 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (..)
-import Html.Attributes exposing (value)
-import Html.Events exposing (onInput)
+import Element exposing (column, el, fill, layout, padding, px, rgb255, spacing, text, width)
+import Element.Background as Background
+import Element.Border as Border
+import Element.Font as Font
+import Element.Input as Input
+import Html exposing (Html)
 import Http
 import Json.Decode
 import Json.Encode as Encode
@@ -65,10 +68,22 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ input [ value model.input, onInput ChangedInput, Html.Attributes.placeholder "Enter Event ID" ] []
-        , div [] [ text ("Event Name: " ++ model.eventName) ]
-        ]
+    layout [ padding 40 ] <|
+        column [ spacing 20, width fill ]
+            [ Input.text
+                [ width (px 300) ]
+                { onChange = ChangedInput
+                , text = model.input
+                , placeholder = Just (Input.placeholder [] <| text "Enter Event ID")
+                , label = Input.labelAbove [ Font.bold ] <| text "Search Events"
+                }
+            , el
+                [ padding 10
+                , Background.color (rgb255 240 240 240)
+                , Border.rounded 5
+                ]
+                (text <| "Event Name: " ++ model.eventName)
+            ]
 
 
 
