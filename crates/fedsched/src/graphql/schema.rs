@@ -56,8 +56,8 @@ fn build_query_root() -> Object {
                 let scheduler = ctx.data::<SchedulerContext>()?;
                 let db = &scheduler.db;
 
-                let from_datetime = ctx.args.try_get("from")?.deserialize::<String>();
-                let to_datetime = ctx.args.try_get("to")?.deserialize::<String>();
+                let from_datetime = ctx.args.try_get("from")?.deserialize::<String>()?;
+                let to_datetime = ctx.args.try_get("to")?.deserialize::<String>()?;
 
                 let mut response = db
                     .query("RETURN fn::select::event($data)")
