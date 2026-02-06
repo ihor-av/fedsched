@@ -70,11 +70,8 @@ fn build_query_root() -> Object {
                     ))
                     .await?;
                 let records: Vec<serde_json::Value> = response.take(0)?;
-                let mut gql_results = Vec::new();
-                for val in records {
-                    let gql_val = async_graphql::to_value(val)?;
-                    gql_results.push(FieldValue::from(gql_val));
-                }
+                let gql_results: Vec<async_graphql::dynamic::FieldValue> =
+                    records.into_iter().map(FieldValue::owned_any).collect();
                 Ok(Some(FieldValue::list(gql_results)))
             })
         })

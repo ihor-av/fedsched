@@ -1,7 +1,7 @@
 use crate::{
     config::{FieldConfig, TableGroup},
     error::FedschedResult,
-    surql_templates::{DefineField, DefineInsertHandler},
+    surql_templates::{DefineField, DefineInsertHandler, EventSelectonByDaterange},
 };
 use askama::Template;
 use include_dir::include_dir;
@@ -29,8 +29,10 @@ impl SchedulerContext {
         for group in grouped_cfgs {
             let field_surql = DefineField::from(&group).render()?;
             db.query(field_surql).await?;
-            let handler_surql = DefineInsertHandler::from(&group).render()?;
-            db.query(handler_surql).await?;
+            let insert_handler_surql = DefineInsertHandler::from(&group).render()?;
+            db.query(insert_handler_surql).await?;
+            let select_handler_surql = EventSelectonByDaterange::from(&group).render()?;
+            db.query(select_handler_surql).await?;
         }
         Ok(Self { db })
     }
