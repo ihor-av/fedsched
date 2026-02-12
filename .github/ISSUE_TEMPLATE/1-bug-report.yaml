@@ -1,0 +1,43 @@
+name: Bug Report
+description: Report a bug in Fedsched
+labels: ["bug"]
+
+body:
+  - type: dropdown
+    id: scope
+    attributes:
+      label: What parts of the project are affected?
+      options:
+        - Frontend
+        - Backend
+        - Dev Environment
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      placeholder: |
+        Actual: The dashboard crashes when I click 'Submit'.
+        Expected: The form should save and redirect to the home page.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: Steps to Reproduce or script
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: other
+    attributes:
+      label: Anything else?
+      description: Any other information or links to related issues.

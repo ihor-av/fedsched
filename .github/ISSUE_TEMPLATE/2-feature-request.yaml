@@ -1,0 +1,35 @@
+name: Feature Request
+description: Suggest a feature for Fedsched
+labels: ["feat"]
+
+body:
+  - type: dropdown
+    id: affected-parts
+    attributes:
+      label: What parts of the project relevant to your suggestion
+      options:
+        - Frontend
+        - Backend
+        - Dev Environment
+      multiple: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What problem are you trying to solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives-considered
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: true
