@@ -47,3 +47,21 @@ impl<'a> From<&TableGroup<'a>> for DefineInsertHandler<'a> {
         }
     }
 }
+#[derive(Template)]
+#[template(path = "event_selection_by_daterange.surql", escape = "none")]
+pub(crate) struct EventSelectonByDaterange<'a> {
+    pub(crate) field_names_and_constraints: Vec<(&'a str, &'a FieldConstraint)>,
+}
+impl<'a> From<&TableGroup<'a>> for EventSelectonByDaterange<'a> {
+    fn from(value: &TableGroup<'a>) -> Self {
+        let field_names_and_constraints: Vec<(&'a str, &'a FieldConstraint)> = value
+            .fields
+            .iter()
+            .map(|cfg| (cfg.field_name.as_str(), &cfg.constraint))
+            .collect();
+
+        Self {
+            field_names_and_constraints,
+        }
+    }
+}
