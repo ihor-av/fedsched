@@ -2,11 +2,13 @@ module Main exposing (main)
 
 import Browser
 import Date exposing (Date)
-import Element exposing (column, el, fill, layout, padding, paragraph, px, rgb255, row, spacing, text, width)
+import Element exposing (alignLeft, alignRight, centerX, centerY, column, el, fill, height, inFront, padding, paragraph, pointer, px, rgba, row, spacing, text, width)
 import Element.Background as Background
 import Element.Border as Border
-import Element.Font as Font
+import Element.Events exposing (onClick)
+import Element.Font as Font exposing (bold, italic)
 import Element.Input as Input
+import Element.Region as Region
 import Html exposing (Html)
 import Http
 import Iso8601
@@ -138,7 +140,10 @@ getInitialInfo =
 type Msg
     = AppLoadedInitialInfo ( Time.Posix, Time.Zone ) -- Current time and day has been loaded
     | PullAllEvents -- Order to pull all events has been made
+    | PullEventsFromInst String -- Pull events from specific instance
     | DateRangeBeenUpdated Date Date -- The new date range has been provided
+    | UserClickedNextWeek -- One week forward
+    | UserClickedPrevWeek -- One week backward
     | GotEvents (Result Http.Error TaggedEventList) -- Got events, tagged with src
     | OpenModal -- Open the modal window
     | CloseModal -- Close the modal window
@@ -242,6 +247,35 @@ updateLoaded msg data =
             , Cmd.none
             )
 
+        UserClickedNextWeek ->
+            let
+                newFrom =
+                    Date.add Date.Weeks 1 data.date_range.from
+
+                newTo =
+                    Date.add Date.Weeks 1 data.date_range.to
+
+                newDateRange =
+                    { from = newFrom, to = newTo }
+            in
+            ( { data | date_range = newDateRange }, List.map (\grp -> pullEvents { from = newFrom, to = newTo, url = grp.full_url }) data.tracked_fedsched_insts |> Cmd.batch )
+
+        UserClickedPrevWeek ->
+            let
+                newFrom =
+                    Date.add Date.Weeks -1 data.date_range.from
+
+                newTo =
+                    Date.add Date.Weeks -1 data.date_range.to
+
+                newDateRange =
+                    { from = newFrom, to = newTo }
+            in
+            ( { data | date_range = newDateRange }, List.map (\grp -> pullEvents { from = newFrom, to = newTo, url = grp.full_url }) data.tracked_fedsched_insts |> Cmd.batch )
+
+        PullEventsFromInst url ->
+            ( { data | modal_window_state = Closed }, pullEvents { from = data.date_range.from, to = data.date_range.to, url = url } )
+
         ModalCollectingUrl url ->
             ( { data | modal_window_state = CollectingMaybeValidFedschedUrl url }, Cmd.none )
 
@@ -262,11 +296,85 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    Element.layout [] <|
-        paragraph
-            []
-            [ text "Placeholder"
-            ]
+    case model of
+        Loading ->
+            Element.layout [] <|
+                el [ centerX, centerY, Font.bold, Font.size 72 ] <|
+                    text "Loading..."
+
+        Loaded data ->
+            Element.layout [ width fill, height fill ] <|
+                column [ width fill, height fill, inFront (viewModal data.modal_window_state) ]
+                    [ viewTopBar data
+                    , viewEvents data
+                    ]
+
+
+viewTopBar : LoadedData -> Element.Element Msg
+viewTopBar data =
+    row [ padding 24, spacing 20, width fill ]
+        [ Input.button [ alignLeft ] { onPress = Just OpenModal, label = text "[ADD-SRC]" }
+        , Input.button [] { onPress = Just UserClickedPrevWeek, label = text "<-" }
+        , el [ Font.bold, Font.size 18 ] <| text <| formatRange data.date_range
+        , Input.button [] { onPress = Just UserClickedNextWeek, label = text "->" }
+        , Input.button [ alignRight ] { onPress = Just PullAllEvents, label = text "[PULL]" }
+        ]
+
+
+viewEvents : LoadedData -> Element.Element Msg
+viewEvents data =
+    let
+        fmt =
+            "MMM d, yyyy"
+
+        posixToDate =
+            Date.fromPosix Time.utc
+    in
+    column [ spacing 20 ] <|
+        List.map
+            (\group ->
+                column [ spacing 10 ] <|
+                    [ el [ Region.heading 2, Font.bold ] <|
+                        text (group.url ++ " - Count: " ++ String.fromInt (List.length group.events))
+                    ]
+            )
+            data.all_events
+
+
+viewModal : ModalWindowState -> Element.Element Msg
+viewModal modal =
+    case modal of
+        Closed ->
+            Element.none
+
+        CollectingMaybeValidFedschedUrl url ->
+            el
+                [ width fill
+                , height fill
+                , Background.color (rgba 0 0 0 0.9)
+                , pointer
+                ]
+            <|
+                el [ centerX, centerY, width (px 450), padding 30, Border.rounded 10 ] <|
+                    column [ spacing 20, width fill ]
+                        [ el [ Font.size 30 ] <| text <| "Add new Fedsched instance"
+                        , Input.text [ width fill ]
+                            { onChange = ModalCollectingUrl
+                            , text = url
+                            , placeholder = Just (Input.placeholder [] <| text <| "https://...")
+                            , label = Input.labelBelow [] <| text <| "Scheduler URL"
+                            }
+                        , Input.button [ centerX ] { onPress = Just <| PullEventsFromInst url, label = text "[VALIATE]" }
+                        ]
+
+
+formatRange : { from : Date, to : Date } -> String
+formatRange { from, to } =
+    let
+        fmt =
+            "MMM d, yyyy"
+    in
+    Date.format fmt from ++ " -- " ++ Date.format fmt to
 
 
 {-| Decode an event from JSON.
