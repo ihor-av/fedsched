@@ -10,7 +10,7 @@ import Element.Input as Input
 import Html exposing (Html)
 import Http
 import Iso8601
-import Json.Decode as Decode exposing (Decoder, field, list, string)
+import Json.Decode as Decode exposing (Decoder, at, field, list, string)
 import Json.Encode as Encode
 import Task
 import Time
@@ -106,7 +106,7 @@ pullEvents data =
                 (\result ->
                     GotEvents (Result.map (\evs -> { url = data.url, events = evs }) result)
                 )
-                eventsDecoder
+                nestedEvtDecoder
         }
 
 
@@ -285,3 +285,8 @@ eventDecoder =
 eventsDecoder : Decoder (List Event)
 eventsDecoder =
     list eventDecoder
+
+
+nestedEvtDecoder : Decoder (List Event)
+nestedEvtDecoder =
+    at [ "data", "getEvents" ] eventsDecoder
