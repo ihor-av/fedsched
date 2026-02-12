@@ -1,0 +1,5 @@
+{
+  "crates/fedsched": "0.1.0",
+  "crates/fedsched-cli": "0.1.0",
+  "web": "0.1.0"
+}

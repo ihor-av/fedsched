@@ -1,0 +1,18 @@
+{
+  "include-component-in-tag": true,
+  "packages": {
+    "crates/fedsched": { "release-type": "rust", "component": "backend" },
+    "crates/fedsched-cli": { "release-type": "rust", "component": "cli" },
+    "web": {
+      "release-type": "simple",
+      "component": "frontend",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "elm.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    }
+  }
+}
