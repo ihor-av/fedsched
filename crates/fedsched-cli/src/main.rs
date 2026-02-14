@@ -1,5 +1,6 @@
 use fedsched::prelude::*;
 use tokio::net::TcpListener;
+use tower_http::cors::CorsLayer;
 
 fn possible_user_config() -> Vec<FieldConfig> {
     use FieldConstraint::*;
@@ -30,6 +31,12 @@ fn possible_user_config() -> Vec<FieldConfig> {
 async fn main() -> FedschedResult<()> {
     let cfgs = possible_user_config();
     let router = setup_scheduler(cfgs).await?;
+
+    let router = if cfg!(debug_assertions) {
+        router.layer(CorsLayer::permissive())
+    } else {
+        router
+    };
 
     println!("Router running on http://localhost:8000/");
     axum::serve(TcpListener::bind("127.0.0.1:8000").await.unwrap(), router)
