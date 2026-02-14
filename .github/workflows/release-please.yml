@@ -27,7 +27,7 @@ jobs:
       - name: Sync Cargo.lock
         if: ${{ steps.release.outputs.pr }}
         run: |
-          cargo update --workspace --offline
+          cargo update --workspace
           if [[ -n "$(git status --porcelain Cargo.lock)" ]]; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
