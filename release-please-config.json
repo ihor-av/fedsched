@@ -1,4 +1,5 @@
 {
+  "bootstrap-sha": "74ed00b80b1a5a1d6a469fe57c03372f999a3adf",
   "include-component-in-tag": true,
   "packages": {
     "crates/fedsched": { "release-type": "rust", "component": "backend" },
